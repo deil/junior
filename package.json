@@ -1,13 +1,19 @@
 {
-  "name": "junior",
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "start": "npx tsx index.ts"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
-  }
+	"name": "junior",
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"start": "npx tsx index.ts",
+		"lint:check": "biome check .",
+		"lint:fix": "biome check --write ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.11",
+		"@types/node": "^22.0.0",
+		"tsx": "^4.0.0",
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"commander": "^14.0.2"
+	}
 }
