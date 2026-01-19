@@ -4,12 +4,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { program } from "commander";
 import { OpenCodeAgent } from "./agent/opencode.js";
-import {
-	getOpenTaskCount,
-	type IterationProgress,
-	type LoopDelegate,
-	runLoop,
-} from "./loop.js";
+import { type IterationProgress, type LoopDelegate, runLoop } from "./loop.js";
 import { PROMPT } from "./prompt.js";
 import { BeadsTaskBackend } from "./tasks/beads.js";
 import type { Task } from "./tasks/types.js";
@@ -64,6 +59,10 @@ const taskBackend = new BeadsTaskBackend(workdir);
 const formatTask = (t: Task) => `${t.id} - ${t.title}`;
 
 const delegate: LoopDelegate = {
+	log(message) {
+		console.log(message);
+	},
+
 	onIterationStart(iteration, maxIterations) {
 		spinner.start(`Iteration ${iteration}/${maxIterations}`);
 	},
@@ -115,17 +114,15 @@ const delegate: LoopDelegate = {
 };
 
 const main = async (): Promise<void> => {
-	console.log("=== Junior going to june ===");
-	console.log(`Working directory: ${workdir}`);
-	if (progressFile) console.log(`Progress file: ${progressFile}`);
+	console.log("=== Junior going to june ===\n");
+	console.log("Context:");
+	console.log(`  Working directory: ${workdir}`);
+	if (progressFile) console.log(`  Progress file: ${progressFile}`);
 	if (verbose) {
 		writeFileSync(verboseLogFile, "");
-		console.log(`Verbose log: ${verboseLogFile}`);
+		console.log(`  Verbose log: ${verboseLogFile}`);
 	}
 	console.log();
-
-	const openCount = await getOpenTaskCount(taskBackend);
-	console.log(`${openCount} open tasks\n`);
 
 	await runLoop(
 		{

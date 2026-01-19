@@ -1,6 +1,6 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { Task, TaskBackend } from "./types.js";
+import type { Task, TaskBackend, TaskStatus } from "./types.js";
 
 const execAsync = promisify(exec);
 
@@ -22,5 +22,11 @@ export class BeadsTaskBackend implements TaskBackend {
 	async getClosed(): Promise<Task[]> {
 		const tasks = await this.list();
 		return tasks.filter((t) => t.status === "closed");
+	}
+
+	async setStatus(taskId: string, status: TaskStatus): Promise<void> {
+		await execAsync(`bd update ${taskId} --status ${status}`, {
+			cwd: this.workdir,
+		});
 	}
 }
