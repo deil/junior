@@ -10,11 +10,11 @@ Autonomous code agent orchestrator that iteratively works through tasks using AI
    - Appends learnings to `progress.txt` for context carryover
 
 2. **Components**
-   - `index.ts` - CLI entry, orchestration, progress logging
-   - `loop.ts` - Iteration engine, task state diffing
-   - `prompt.ts` - Agent instruction template
-   - `agent/opencode.ts` - Spawns OpenCode CLI as the AI executor
-   - `tasks/beads.ts` - Task backend via Beads CLI
+   - `src/index.ts` - CLI entry, orchestration, progress logging
+   - `src/loop.ts` - Iteration engine, task state diffing
+   - `src/prompt.ts` - Agent instruction template
+   - `src/agent/opencode.ts` - Spawns OpenCode CLI as the AI executor
+   - `src/tasks/beads.ts` - Task backend via Beads CLI
 
 3. **Flow**
    ```

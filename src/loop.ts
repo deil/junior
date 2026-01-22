@@ -11,6 +11,7 @@ export interface IterationProgress {
 
 export interface LoopDelegate {
 	log(message: string): void;
+	onPreflightUpdate(message: string, done: boolean): void;
 	onIterationStart(iteration: number, maxIterations: number): void;
 	onIterationAgentDone(): void;
 	onIterationComplete(progress: IterationProgress): void;
@@ -38,20 +39,25 @@ export const runLoop = async (
 	let prevProgress = readProgress();
 
 	// Preflight checks
-	delegate.log("⏳ Preflight checks...");
+	const preflightLogs: string[] = [];
+	delegate.onPreflightUpdate("⏳ Preflight checks...", false);
 	const initialInProgress = prevTasks.filter((t) => t.status === "in_progress");
 	if (initialInProgress.length > 0) {
-		delegate.log(`⚠ Found tasks left in-progress, moving back to 'ready':`);
+		preflightLogs.push(
+			`⚠ Found tasks left in-progress, moving back to 'ready':`,
+		);
 		for (const t of initialInProgress) {
-			delegate.log(`  ↩ ${t.id} - ${t.title}`);
+			preflightLogs.push(`  ↩ ${t.id} - ${t.title}`);
 			await taskBackend.setStatus(t.id, "ready");
 		}
 		prevTasks = await taskBackend.list();
 	}
-	delegate.log("✓ Preflight checks done\n");
+	delegate.onPreflightUpdate("✓ Preflight checks... done", true);
+	for (const message of preflightLogs) delegate.log(message);
+	if (preflightLogs.length > 0) delegate.log("");
 
 	const openCount = prevTasks.length - prevClosed.length;
-	delegate.log(`${openCount} open tasks\n`);
+	delegate.log(`Backlog: ${openCount} open tasks\n`);
 	if (openCount === 0) {
 		delegate.onAllTasksComplete();
 		return;

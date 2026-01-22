@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
-		"start": "npx tsx index.ts",
+		"start": "npx tsx src/index.ts",
 		"lint:check": "biome check .",
 		"lint:fix": "biome check --write ."
 	},

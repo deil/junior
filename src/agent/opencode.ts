@@ -15,10 +15,10 @@ export class OpenCodeAgent implements Agent {
 
 	run(prompt: string): Promise<void> {
 		return new Promise((resolve) => {
-			const cmd = this.verbose ? "opencode" : "setsid";
+			const cmd = "opencode";
 			const args = this.verbose
-				? ["run", "-m", "opencode/grok-code", prompt]
-				: ["--wait", "opencode", "run", "-m", "opencode/grok-code", prompt];
+				? ["run", "--format", "json", "-m", "opencode/grok-code", prompt]
+				: ["run", "-m", "opencode/grok-code", prompt];
 
 			const child = spawn(cmd, args, {
 				stdio: ["ignore", "pipe", "pipe"],

@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { program } from "commander";
 import { OpenCodeAgent } from "./agent/opencode.js";
 import { type IterationProgress, type LoopDelegate, runLoop } from "./loop.js";
-import { PROMPT } from "./prompt.js";
+import { getEpicPrompt, getGenericPrompt } from "./prompt.js";
 import { BeadsTaskBackend } from "./tasks/beads.js";
 import type { Task } from "./tasks/types.js";
 import * as spinner from "./ui/spinner.js";
@@ -16,12 +16,19 @@ program
 	.argument("[directory]", "working directory", process.cwd())
 	.option("-v, --verbose", "enable verbose logging")
 	.option("-p, --progress <file>", "progress file path")
+	.option("--epic <epic-id>", "run only tasks in the epic")
 	.parse();
 
-const opts = program.opts<{ verbose?: boolean; progress?: string }>();
+const opts = program.opts<{
+	verbose?: boolean;
+	progress?: string;
+	epic?: string;
+}>();
 const workdir = resolve(program.args[0] || process.cwd());
 const verbose = opts.verbose ?? false;
 const progressFile = opts.progress ? resolve(workdir, opts.progress) : null;
+const progressFileName = opts.progress?.trim() || "progress.txt";
+const epicId = opts.epic?.trim() || "";
 
 const readProgressFile = (): string => {
 	if (!progressFile || !existsSync(progressFile)) return "";
@@ -46,7 +53,7 @@ process.on("SIGINT", () => {
 	);
 });
 
-const verboseLogFile = resolve(process.cwd(), "opencode-stdout.txt");
+const verboseLogFile = resolve(process.cwd(), "temp/opencode-stdout.jsonl");
 
 const agent = new OpenCodeAgent({
 	workdir,
@@ -62,9 +69,17 @@ const delegate: LoopDelegate = {
 	log(message) {
 		console.log(message);
 	},
+	onPreflightUpdate(message, done) {
+		const text = done ? `\r${message}\n\n` : message;
+		process.stdout.write(text);
+	},
 
 	onIterationStart(iteration, maxIterations) {
-		spinner.start(`Iteration ${iteration}/${maxIterations}`);
+		const iterationLabel = ` (iteration ${iteration}/${maxIterations})`;
+		const text = verbose
+			? `Working...${iterationLabel}`
+			: "Working...";
+		spinner.start(text);
 	},
 
 	onIterationAgentDone() {
@@ -83,7 +98,7 @@ const delegate: LoopDelegate = {
 		}
 
 		if (newlyClosed.length > 0) {
-			console.log(`Closed (${newlyClosed.length}):`);
+			console.log("Task closed:");
 			for (const t of newlyClosed) console.log(`  ✓ ${formatTask(t)}`);
 		}
 
@@ -96,7 +111,7 @@ const delegate: LoopDelegate = {
 			console.log("No changes");
 		}
 
-		console.log(`Remaining: ${remaining.length}`);
+		console.log(`Backlog: ${remaining.length} open tasks remaining`);
 		console.log();
 	},
 
@@ -123,12 +138,23 @@ const main = async (): Promise<void> => {
 		console.log(`  Verbose log: ${verboseLogFile}`);
 	}
 	console.log();
+	console.log(`Mode: ${epicId ? `Epic ${epicId}` : "next available task"}`);
+	console.log();
+
+	const prompt = epicId
+		? getEpicPrompt(epicId, progressFileName)
+		: getGenericPrompt(progressFileName);
+	if (verbose) {
+		console.log("🐛 Agent instructions:");
+		console.log(prompt);
+		console.log();
+	}
 
 	await runLoop(
 		{
 			agent,
 			taskBackend,
-			prompt: PROMPT,
+			prompt,
 			maxIterations: MAX_ITERATIONS,
 			readProgress: readProgressFile,
 		},
