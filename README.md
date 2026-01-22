@@ -24,10 +24,10 @@ Autonomous code agent orchestrator that iteratively works through tasks using AI
 ## Usage
 
 ```bash
-npm start [directory] [--verbose] [--progress <file>]
+pnpm start [project-directory] [--epic <epic-id>] [--progress <file>]
 ```
 
 ## Dependencies
 
-- **OpenCode** - AI agent (external CLI)
-- **Beads** - Task tracking (`bd` CLI)
+- **OpenCode** - [AI agent](https://opencode.ai)
+- **Beads** - [Task tracking](https://github.com/steveyegge/beads)
