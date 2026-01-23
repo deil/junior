@@ -4,6 +4,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { program } from "commander";
 import { OpenCodeAgent } from "./agent/opencode.js";
+import { OpenCodeInDockerAgent } from "./agent/opencode-docker.js";
 import { type IterationProgress, type LoopDelegate, runLoop } from "./loop.js";
 import { getEpicPrompt, getGenericPrompt } from "./prompt.js";
 import { BeadsTaskBackend } from "./tasks/beads.js";
@@ -17,18 +18,21 @@ program
 	.option("-v, --verbose", "enable verbose logging")
 	.option("-p, --progress <file>", "progress file path")
 	.option("--epic <epic-id>", "run only tasks in the epic")
+	.option("--docker", "run OpenCode in Docker")
 	.parse();
 
 const opts = program.opts<{
 	verbose?: boolean;
 	progress?: string;
 	epic?: string;
+	docker?: boolean;
 }>();
 const workdir = resolve(program.args[0] || process.cwd());
 const verbose = opts.verbose ?? false;
 const progressFile = opts.progress ? resolve(workdir, opts.progress) : null;
 const progressFileName = opts.progress?.trim() || "progress.txt";
 const epicId = opts.epic?.trim() || "";
+const useDocker = opts.docker ?? false;
 
 const readProgressFile = (): string => {
 	if (!progressFile || !existsSync(progressFile)) return "";
@@ -55,11 +59,17 @@ process.on("SIGINT", () => {
 
 const verboseLogFile = resolve(process.cwd(), "temp/opencode-stdout.jsonl");
 
-const agent = new OpenCodeAgent({
-	workdir,
-	verbose,
-	logFile: verboseLogFile,
-});
+const agent = useDocker
+	? new OpenCodeInDockerAgent({
+			workdir,
+			verbose,
+			logFile: verboseLogFile,
+		})
+	: new OpenCodeAgent({
+			workdir,
+			verbose,
+			logFile: verboseLogFile,
+		});
 
 const taskBackend = new BeadsTaskBackend(workdir);
 
